@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strategic Alliance: Ronaldinho & HK/Mainland China Tourism (FIFA WC 2026)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9; /* slate-100 */
+            color: #1e293b; /* slate-800 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Default max-width, can be overridden by Tailwind max-w- classes */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px; /* Base height */
+            max-height: 400px; /* Max height */
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .stat-card {
+            background-color: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            margin-bottom: 1.5rem;
+        }
+        .section-title {
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: 700;
+            color: #1d4ed8; /* blue-700 (Medium Blue: #0000CD adjusted to Tailwind) */
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #20B2AA; /* Teal */
+        }
+        .sub-section-title {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 600;
+            color: #1e3a8a; /* blue-800 (Deep Blue: #00008B adjusted) */
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .highlight-stat {
+            font-size: 2.25rem; /* text-4xl */
+            font-weight: 700;
+            color: #1d4ed8; /* blue-700 */
+        }
+        .highlight-label {
+            font-size: 1rem; /* text-base */
+            color: #475569; /* slate-600 */
+            margin-top: 0.25rem;
+        }
+        .nav-item {
+            padding: 0.5rem 1rem;
+            color: white;
+            border-radius: 0.375rem;
+            transition: background-color 0.3s ease;
+        }
+        .nav-item:hover {
+            background-color: #0000CD; /* Medium Blue */
+        }
+        .flowchart-step {
+            background-color: #ADD8E6; /* Light Blue */
+            color: #1e3a8a; /* blue-800 */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            margin-bottom: 1rem;
+            border: 2px solid #20B2AA; /* Teal */
+        }
+        .flowchart-arrow {
+            text-align: center;
+            font-size: 1.5rem;
+            color: #20B2AA; /* Teal */
+            margin-bottom: 1rem;
+        }
+        .timeline {
+            position: relative;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        .timeline::after {
+            content: '';
+            position: absolute;
+            width: 6px;
+            background-color: #20B2AA; /* Teal */
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            margin-left: -3px;
+        }
+        .timeline-container {
+            padding: 10px 40px;
+            position: relative;
+            background-color: inherit;
+            width: 50%;
+        }
+        .timeline-container.left {
+            left: 0;
+        }
+        .timeline-container.right {
+            left: 50%;
+        }
+        .timeline-container::after {
+            content: '';
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            right: -12px;
+            background-color: white;
+            border: 4px solid #0000CD; /* Medium Blue */
+            top: 15px;
+            border-radius: 50%;
+            z-index: 1;
+        }
+        .timeline-container.right::after {
+            left: -13px;
+        }
+        .timeline-content {
+            padding: 1.25rem 1.875rem;
+            background-color: white;
+            position: relative;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            border: 1px solid #ADD8E6; /* Light Blue */
+        }
+        .timeline-content h3 {
+            color: #1d4ed8; /* blue-700 */
+        }
+         @media screen and (max-width: 768px) {
+            .timeline::after {
+                left: 31px;
+            }
+            .timeline-container {
+                width: 100%;
+                padding-left: 70px;
+                padding-right: 25px;
+            }
+            .timeline-container.right {
+                left: 0%;
+            }
+            .timeline-container.left::after, .timeline-container.right::after {
+                left: 15px;
+            }
+        }
+        .gemini-output-card {
+            background-color: #e0f2fe; /* sky-100 */
+            border-left: 4px solid #0ea5e9; /* sky-500 */
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 0.375rem;
+        }
+        .gemini-output-card h4 {
+            color: #0369a1; /* sky-700 */
+            font-weight: 600;
+        }
+        .gemini-output-card p {
+            color: #075985; /* sky-800 */
+            font-size: 0.875rem; /* text-sm */
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #0000CD; /* Medium Blue */
+            animation: spin 1s ease infinite;
+            margin: 1rem auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-slate-100">
+
+    <header class="bg-[#00008B] text-white p-4 sticky top-0 z-50 shadow-lg">
+        <div class="container mx-auto flex flex-wrap justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold">Ronaldinho & Tourism: A Strategic Alliance</h1>
+            <nav class="mt-2 md:mt-0">
+                <ul class="flex flex-wrap space-x-2 md:space-x-4 text-sm md:text-base">
+                    <li><a href="#executiveSummary" class="nav-item">Summary</a></li>
+                    <li><a href="#tourismLandscape" class="nav-item">Tourism Landscape</a></li>
+                    <li><a href="#ronaldinhoProfile" class="nav-item">Ronaldinho's Profile</a></li>
+                    <li><a href="#activations" class="nav-item">Activations</a></li>
+                    <li><a href="#worldCupNav" class="nav-item">World Cup Strategy</a></li>
+                    <li><a href="#kpis" class="nav-item">KPIs & ROI</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8">
+
+        <section id="executiveSummary" class="stat-card">
+            <h2 class="section-title">Executive Summary</h2>
+            <p class="text-slate-700 leading-relaxed">
+                This infographic outlines a strategic proposal for a landmark partnership between the Hong Kong Tourism Board (HKTB), potentially with the Ministry of Culture and Tourism of China (MCT), and global football icon Ronaldinho Gaúcho. The objective is to leverage Ronaldinho's popularity and his FIFA World Cup 2026 Ambassador status to elevate the tourism profiles of Hong Kong and key Mainland China destinations, especially within the Greater Bay Area (GBA).
+            </p>
+            <p class="text-slate-700 leading-relaxed mt-4">
+                The proposal focuses on high-impact activations, including "Legends" football events, cultural tourism experiences, and youth engagement, amplified by a multi-platform digital strategy. This partnership aims for a surge in visitor arrivals, enhanced brand visibility, boosted tourism revenue, and strengthened cultural exchange, positioning Hong Kong and the GBA as premier global tourism destinations.
+            </p>
+        </section>
+
+        <section id="tourismLandscape" class="stat-card">
+            <h2 class="section-title">The Strategic Imperative: Elevating Tourism Profiles</h2>
+            <p class="text-slate-700 leading-relaxed mb-6">
+                A comprehensive understanding of the current tourism strategies of both the Hong Kong Tourism Board (HKTB) and the Mainland China Ministry of Culture and Tourism (MCT) is crucial. Both entities are pursuing ambitious goals to revitalize and grow their tourism sectors, emphasizing international visitors and unique cultural experiences. This section highlights key data points reflecting their efforts and goals.
+            </p>
+
+            <h3 class="sub-section-title">Hong Kong Tourism Board (HKTB) Snapshot</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                <div class="bg-sky-100 p-4 rounded-lg shadow text-center">
+                    <p class="highlight-stat">45M</p>
+                    <p class="highlight-label">Visitors to Hong Kong (2024)</p>
+                    <p class="text-xs text-slate-600 mt-1">(34M Mainland, 10.5M Non-Mainland)</p>
+                </div>
+                <div class="bg-sky-100 p-4 rounded-lg shadow text-center">
+                    <p class="highlight-stat">49M</p>
+                    <p class="highlight-label">Projected Visitors (2025)</p>
+                </div>
+                <div class="bg-sky-100 p-4 rounded-lg shadow text-center">
+                    <p class="highlight-stat">HK$178.4B</p>
+                    <p class="highlight-label">Tourism Expenditure (TEAIT 2023)</p>
+                </div>
+                <div class="bg-sky-100 p-4 rounded-lg shadow text-center">
+                    <p class="highlight-stat">8.8/10</p>
+                    <p class="highlight-label">Overnight Visitor Satisfaction (2024)</p>
+                </div>
+                 <div class="bg-sky-100 p-4 rounded-lg shadow text-center">
+                    <p class="highlight-stat">94%</p>
+                    <p class="highlight-label">Intention to Revisit/Recommend (2024)</p>
+                </div>
+                 <div class="bg-sky-100 p-4 rounded-lg shadow text-center">
+                    <p class="highlight-stat">HK$5,490</p>
+                    <p class="highlight-label">Per-Capita Spend Overnight Visitors (2024)</p>
+                </div>
+            </div>
+
+            <p class="text-slate-700 leading-relaxed my-4">
+                The HKTB's 2025-26 budget of HK$1.166 billion is strategically allocated to enhance Hong Kong's global appeal. A significant portion focuses on mega-events and targeting diverse source markets, including high-end travelers from the Middle East and ASEAN nations.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h4 class="text-xl font-semibold text-slate-700 mb-2">HKTB Budget Allocation (2025-26)</h4>
+                    <p class="text-sm text-slate-600 mb-3">Total Marketing & Promotions Budget: HK$1.166 Billion</p>
+                    <div class="chart-container h-[300px] md:h-[350px] max-w-md">
+                        <canvas id="hktbBudgetChart"></canvas>
+                    </div>
+                    <p class="text-sm text-slate-600 mt-3">This budget underscores HKTB's commitment to diverse promotional strategies, including celebrity and KOL engagements, to attract a global audience.</p>
+                </div>
+                <div>
+                    <h4 class="text-xl font-semibold text-slate-700 mb-2">HK Visitor Arrivals Breakdown (2024)</h4>
+                     <p class="text-sm text-slate-600 mb-3">Total Visitors: Approx. 45 Million</p>
+                    <div class="chart-container h-[300px] md:h-[350px] max-w-md">
+                        <canvas id="visitorArrivalsChart"></canvas>
+                    </div>
+                    <p class="text-sm text-slate-600 mt-3">Mainland China remains the largest source market, with significant growth also observed from non-Mainland visitors, indicating a broadening appeal.</p>
+                </div>
+            </div>
+            
+            <h3 class="sub-section-title mt-8">Mainland China Ministry of Culture and Tourism (MCT) Focus</h3>
+            <p class="text-slate-700 leading-relaxed mb-4">
+                The MCT is actively stimulating its tourism sector, emphasizing cultural enrichment and international visitor attraction. Key initiatives include nationwide campaigns and optimizing inbound travel policies, such as visa-free schemes.
+            </p>
+            <div class="bg-teal-50 p-6 rounded-lg shadow text-center border-l-4 border-teal-500">
+                <p class="text-3xl font-bold text-teal-700">> 1 Billion RMB</p>
+                <p class="text-lg text-teal-600 mt-1">Subsidies for 15th China Tourism Day Campaign (May 2025)</p>
+                <p class="text-sm text-slate-600 mt-2">This campaign, involving over 6,000 promotional measures, highlights the MCT's commitment to boosting tourism, with a strong focus on attracting international visitors by simplifying travel and diversifying experiences.</p>
+            </div>
+             <p class="text-slate-700 leading-relaxed mt-6">
+                Both HKTB and MCT show a clear alignment in diversifying tourism offerings, attracting high-value international visitors, promoting cultural experiences, and developing the Greater Bay Area (GBA) as a unified tourism destination. This synergy provides a strong foundation for a collaborative partnership with Ronaldinho.
+            </p>
+        </section>
+
+        <section id="ronaldinhoProfile" class="stat-card">
+            <h2 class="section-title">Ronaldinho Gaúcho: A Global Icon</h2>
+            <p class="text-slate-700 leading-relaxed mb-6">
+                Ronaldinho's enduring global popularity, charismatic personality, and official FIFA World Cup 2026 Ambassador status make him an ideal figure for this strategic tourism initiative. His appeal transcends borders, particularly resonating strongly in Hong Kong and Mainland China.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h4 class="text-xl font-semibold text-slate-700 mb-2">Global Social Media Reach (Selected Platforms)</h4>
+                    <p class="text-sm text-slate-600 mb-3">Approximate followers as of recent data.</p>
+                    <div class="chart-container h-[350px] md:h-[400px]">
+                        <canvas id="socialMediaChart"></canvas>
+                    </div>
+                    <p class="text-sm text-slate-600 mt-3">Ronaldinho's massive social media presence offers unparalleled reach for promotional content. Establishing or amplifying his presence on key Mainland Chinese platforms like Weibo and Douyin will be crucial.</p>
+                </div>
+                <div class="space-y-4">
+                    <div class="bg-sky-50 p-4 rounded-lg border-l-4 border-sky-500">
+                        <h4 class="font-semibold text-sky-700">"Football Elf" (足球精灵)</h4>
+                        <p class="text-sm text-slate-600">Affectionate nickname in Mainland China, reflecting his joyful style and magical skills – a highly positive and marketable persona.</p>
+                    </div>
+                    <div class="bg-rose-50 p-4 rounded-lg border-l-4 border-rose-500">
+                        <h4 class="font-semibold text-rose-700">Brand Considerations</h4>
+                        <p class="text-sm text-slate-600">While overwhelmingly positive, any past controversies (e.g., memecoin issue) require proactive brand management. The campaign will focus on his philanthropic efforts, passion for football development, and positive image, aligning with "socialist core values" emphasized in China's celebrity endorsement regulations.</p>
+                    </div>
+                     <div class="bg-emerald-50 p-4 rounded-lg border-l-4 border-emerald-500">
+                        <h4 class="font-semibold text-emerald-700">FIFA World Cup 2026 Ambassador</h4>
+                        <p class="text-sm text-slate-600">This official status provides an authentic and legitimate connection to the tournament, differentiating the campaign from unauthorized associations and offering a secure promotional platform.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="activations" class="stat-card">
+            <h2 class="section-title">Strategic Partnership Framework: High-Impact Activations</h2>
+            <p class="text-slate-700 leading-relaxed mb-6">
+                A multifaceted approach blending large-scale events, intimate cultural experiences, and robust digital engagement will maximize Ronaldinho's impact. These activations are designed to captivate audiences in Hong Kong, Mainland China, and key international markets.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow-lg border-t-4 border-blue-600">
+                    <h4 class="text-xl font-semibold text-blue-700 mb-2">Signature Events</h4>
+                    <ul class="list-disc list-inside text-slate-600 space-y-1">
+                        <li>"Legends Matches" at Kai Tak Sports Park & GBA cities.</li>
+                        <li>Exclusive Football Skills Clinics & Workshops for youth.</li>
+                        <li>Fan Zones & Meet & Greet Opportunities.</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg border-t-4 border-teal-500">
+                    <h4 class="text-xl font-semibold text-teal-600 mb-2">Cultural Tourism</h4>
+                    <ul class="list-disc list-inside text-slate-600 space-y-1">
+                        <li>Ambassador for iconic cultural festivals (e.g., CNY).</li>
+                        <li>"Heritage Trailblazer" content series at landmarks.</li>
+                        <li>"Gastronomic Explorer" showcasing culinary scenes.</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg border-t-4 border-sky-500">
+                    <h4 class="text-xl font-semibold text-sky-600 mb-2">Youth & GBA Focus</h4>
+                    <ul class="list-disc list-inside text-slate-600 space-y-1">
+                        <li>Collaborations with local football academies.</li>
+                        <li>"Ronaldinho Football Challenge" for young players.</li>
+                        <li>"Ronaldinho's GBA Discovery" multi-destination content.</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="mt-8 text-center">
+                <button id="generateIdeasBtn" class="bg-gradient-to-r from-blue-600 to-teal-500 hover:from-blue-700 hover:to-teal-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-150 ease-in-out transform hover:scale-105">
+                    ✨ Generate New Activation Ideas with AI ✨
+                </button>
+                <div id="geminiIdeasOutput" class="mt-6 text-left"></div>
+            </div>
+
+            <h3 class="sub-section-title mt-8">Digital & Media Amplification</h3>
+             <p class="text-slate-700 leading-relaxed mb-4">
+                A tailored digital strategy across key platforms is essential. Content will be localized, emphasizing Ronaldinho's positive "Football Elf" persona and the cultural richness of the destinations.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-slate-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-slate-700 mb-2">Key Platforms & Content Focus:</h4>
+                    <ul class="list-disc list-inside text-sm text-slate-600 space-y-1">
+                        <li><strong>Mainland China (Weibo, Douyin, Xiaohongshu, WeChat):</strong> Short videos, viral challenges, lifestyle content, interactive mini-programs. Athlete-centric and aesthetically pleasing.</li>
+                        <li><strong>HK & International (Instagram, TikTok, YouTube, Facebook):</strong> High-quality visuals, behind-the-scenes content, KOL collaborations. Leverage HKTB's successful TikTok challenge model.</li>
+                    </ul>
+                </div>
+                 <div class="bg-slate-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-slate-700 mb-2">Interactive Campaigns:</h4>
+                    <ul class="list-disc list-inside text-sm text-slate-600 space-y-1">
+                        <li>Live Q&A sessions with Ronaldinho.</li>
+                        <li>Branded AR filters and mini-games.</li>
+                        <li>User-Generated Content (UGC) campaigns.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        
+        <section id="activationTimeline" class="stat-card">
+            <h2 class="section-title">Proposed Activation Timeline (2025-2026)</h2>
+            <p class="text-slate-700 leading-relaxed mb-6">
+                The partnership will unfold in phases, building momentum towards the FIFA World Cup 2026 and establishing a lasting legacy. This timeline outlines key activations and their objectives.
+            </p>
+            <div class="timeline">
+                <div class="timeline-container left">
+                    <div class="timeline-content">
+                        <h3 class="text-lg font-semibold mb-1">Q2 2025: Campaign Launch</h3>
+                        <p class="text-sm text-slate-600">Official partnership announcement. "Ronaldinho's Asian Adventure" teaser. Generate media buzz and initial social media engagement.</p>
+                    </div>
+                </div>
+                <div class="timeline-container right">
+                    <div class="timeline-content">
+                        <h3 class="text-lg font-semibold mb-1">Q3 2025: Hong Kong Signature Event</h3>
+                        <p class="text-sm text-slate-600">Legends Match at Kai Tak Sports Park. Youth clinics. Cultural immersion (e.g., Mid-Autumn Festival). Showcase HK's event capability.</p>
+                    </div>
+                </div>
+                <div class="timeline-container left">
+                    <div class="timeline-content">
+                        <h3 class="text-lg font-semibold mb-1">Q4 2025: GBA Expansion</h3>
+                        <p class="text-sm text-slate-600">"Ronaldinho's GBA Discovery" content series. Fan meet & greets in GBA. Promote multi-destination travel.</p>
+                    </div>
+                </div>
+                <div class="timeline-container right">
+                    <div class="timeline-content">
+                        <h3 class="text-lg font-semibold mb-1">Q1-Q2 2026: Road to World Cup</h3>
+                        <p class="text-sm text-slate-600">"Ronaldinho's WC2026 Countdown from Asia" digital campaign. Interactive online games. Leverage WC hype.</p>
+                    </div>
+                </div>
+                <div class="timeline-container left">
+                    <div class="timeline-content">
+                        <h3 class="text-lg font-semibold mb-1">Q2-Q3 2026: World Cup Period</h3>
+                        <p class="text-sm text-slate-600">Curated "Football Fan Havens" (non-FIFA branded). Ronaldinho shares WC thoughts from HK/GBA. Capitalize on peak interest.</p>
+                    </div>
+                </div>
+                <div class="timeline-container right">
+                    <div class="timeline-content">
+                        <h3 class="text-lg font-semibold mb-1">Post-Q3 2026: Legacy</h3>
+                        <p class="text-sm text-slate-600">"Inspired by Ronaldinho" youth programs. Promote HK/GBA as year-round destinations. Build long-term association.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="worldCupNav" class="stat-card">
+            <h2 class="section-title">Navigating the FIFA World Cup 2026: Legally Astute Association</h2>
+            <p class="text-slate-700 leading-relaxed mb-6">
+                The strategy is not traditional "ambush marketing" but "ambassadorial storytelling." Ronaldinho, as an official FIFA Ambassador, shares his World Cup excitement from Hong Kong and China, creating a legitimate and powerful association while respecting FIFA's IP and local laws.
+            </p>
+            <div class="bg-sky-50 p-6 rounded-lg border-l-4 border-sky-500 mb-6">
+                <h4 class="text-xl font-semibold text-sky-700 mb-2">Core Principle: Ambassadorial Storytelling</h4>
+                <p class="text-slate-600">Campaigns center on Ronaldinho's personal journey, his FIFA Ambassador role, and his experiences in HK/China. The World Cup is the exciting backdrop. This is "association by personality and official role," not by event IP infringement.</p>
+            </div>
+            <h4 class="text-xl font-semibold text-slate-700 mb-3">Key Legal & Strategic Considerations:</h4>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white border border-slate-300">
+                    <thead class="bg-slate-200">
+                        <tr>
+                            <th class="text-left py-2 px-3 border-b text-slate-700">Tactic Type</th>
+                            <th class="text-left py-2 px-3 border-b text-slate-700">Approach with Ronaldinho</th>
+                            <th class="text-left py-2 px-3 border-b text-slate-700">Legal Risk (HK/Mainland)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="hover:bg-slate-50">
+                            <td class="py-2 px-3 border-b">Direct IP Use (WC Logos etc.)</td>
+                            <td class="py-2 px-3 border-b text-red-600 font-semibold">Not Recommended</td>
+                            <td class="py-2 px-3 border-b text-red-600 font-semibold">High</td>
+                        </tr>
+                        <tr class="hover:bg-slate-50">
+                            <td class="py-2 px-3 border-b">"Ambassadorial Storytelling"</td>
+                            <td class="py-2 px-3 border-b text-green-600 font-semibold">Highly Recommended (Core Strategy)</td>
+                            <td class="py-2 px-3 border-b text-green-600 font-semibold">Low</td>
+                        </tr>
+                        <tr class="hover:bg-slate-50">
+                            <td class="py-2 px-3 border-b">Thematic Advertising (Generic Football)</td>
+                            <td class="py-2 px-3 border-b text-yellow-600 font-semibold">Recommended with Caution</td>
+                            <td class="py-2 px-3 border-b text-yellow-600 font-semibold">Low to Medium</td>
+                        </tr>
+                        <tr class="hover:bg-slate-50">
+                            <td class="py-2 px-3 border-b">Legends Matches/Fan Zones (Not WC Branded)</td>
+                            <td class="py-2 px-3 border-b text-green-600 font-semibold">Highly Recommended</td>
+                            <td class="py-2 px-3 border-b text-green-600 font-semibold">Low</td>
+                        </tr>
+                         <tr class="hover:bg-slate-50">
+                            <td class="py-2 px-3 border-b">Digital Content (Generic WC Excitement)</td>
+                            <td class="py-2 px-3 border-b text-yellow-600 font-semibold">Recommended with Careful Wording</td>
+                            <td class="py-2 px-3 border-b text-yellow-600 font-semibold">Low to Medium</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-sm text-slate-600 mt-4">All campaign materials must undergo rigorous legal review to ensure compliance and focus on Ronaldinho and the destinations, using generic football themes for broader World Cup excitement.</p>
+        </section>
+
+        <section id="kpis" class="stat-card">
+            <h2 class="section-title">Measuring Success: KPIs and Projected ROI</h2>
+            <p class="text-slate-700 leading-relaxed mb-6">
+                A robust framework will measure success through clear Key Performance Indicators (KPIs) aligned with HKTB and MCT objectives, projecting a comprehensive Return on Investment (ROI) covering economic, brand, and cultural impacts.
+            </p>
+            <h3 class="sub-section-title">Illustrative Key Performance Indicators (KPIs)</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="stat-card bg-blue-50 border-blue-500 border-l-4 p-4">
+                    <p class="highlight-stat text-blue-600">10-15%</p>
+                    <p class="highlight-label">Increase in Target Visitor Arrivals</p>
+                    <p class="text-xs text-slate-500 mt-1">(e.g., Luxury, GBA, Key International)</p>
+                </div>
+                <div class="stat-card bg-teal-50 border-teal-500 border-l-4 p-4">
+                    <p class="highlight-stat text-teal-600">500M+</p>
+                    <p class="highlight-label">Social Media Impressions</p>
+                     <p class="text-xs text-slate-500 mt-1">(Benchmark: Hello HK TikTok 1.5B views)</p>
+                </div>
+                <div class="stat-card bg-sky-50 border-sky-500 border-l-4 p-4">
+                    <p class="highlight-stat text-sky-600">>8.8/10</p>
+                    <p class="highlight-label">Visitor Satisfaction (Campaign Participants)</p>
+                </div>
+                <div class="stat-card bg-indigo-50 border-indigo-500 border-l-4 p-4">
+                    <p class="highlight-stat text-indigo-600">HK$50M+</p>
+                    <p class="highlight-label">Media Value Equivalency (MVE)</p>
+                </div>
+                <div class="stat-card bg-purple-50 border-purple-500 border-l-4 p-4">
+                    <p class="highlight-stat text-purple-600">2,000+</p>
+                    <p class="highlight-label">Youth Participants in Clinics/Events</p>
+                </div>
+                 <div class="stat-card bg-pink-50 border-pink-500 border-l-4 p-4">
+                    <p class="highlight-stat text-pink-600">10%+</p>
+                    <p class="highlight-label">Increase in Per-Capita Spend (Campaign-Aware Visitors)</p>
+                </div>
+            </div>
+             <p class="text-slate-700 leading-relaxed mt-6">
+                The ROI assessment will be holistic, considering direct economic returns (tourism revenue, job creation) and significant brand benefits (enhanced global perception, media visibility, long-term strategic value). This is an investment in long-term brand building and international soft power.
+            </p>
+        </section>
+        
+        <section id="recommendations" class="stat-card">
+            <h2 class="section-title">Strategic Recommendations for the Minister of Tourism</h2>
+            <p class="text-slate-700 leading-relaxed mb-6">
+                This partnership with Ronaldinho Gaúcho offers a unique opportunity to amplify global tourism appeal. The following steps are recommended to capitalize on this potential:
+            </p>
+            <div class="space-y-4">
+                <div class="flowchart-step">1. Initiate High-Level Discussions with Ronaldinho's Representatives</div>
+                <div class="flowchart-arrow">⬇</div>
+                <div class="flowchart-step">2. Establish Cross-Departmental & GBA Collaboration Working Group</div>
+                <div class="flowchart-arrow">⬇</div>
+                <div class="flowchart-step">3. Secure Budget Allocation & Plan Phased Investment</div>
+                <div class="flowchart-arrow">⬇</div>
+                <div class="flowchart-step">4. Engage Specialized Legal Counsel & Proactive Brand Management</div>
+                <div class="flowchart-arrow">⬇</div>
+                <div class="flowchart-step">5. Focus on Legacy & Sustainability of Activations</div>
+                <div class="flowchart-arrow">⬇</div>
+                <div class="flowchart-step">6. Implement Comprehensive KPI Framework for ROI Tracking</div>
+            </div>
+            <p class="text-slate-700 leading-relaxed mt-6">
+                By embracing this strategic alliance, Hong Kong, with its GBA partners, can orchestrate a globally resonant tourism campaign, solidifying the region's standing as a premier global destination leading up to, during, and beyond the FIFA World Cup 2026.
+            </p>
+        </section>
+
+    </main>
+
+    <footer class="bg-[#00008B] text-white text-center p-6 mt-8">
+        <p>&copy; <span id="currentYear"></span> Strategic Tourism Initiative. All data derived from research report.</p>
+        <p class="text-xs mt-1">This infographic is for illustrative purposes based on the provided research.</p>
+    </footer>
+
+    <script>
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+        const tooltipTitleCallback = (tooltipItems) => {
+            const item = tooltipItems[0];
+            let label = item.chart.data.labels[item.dataIndex];
+            if (Array.isArray(label)) {
+                return label.join(' ');
+            } else {
+                return label;
+            }
+        };
+
+        const commonChartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#1e293b', // slate-800
+                        font: { size: 12 }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        title: tooltipTitleCallback
+                    },
+                    backgroundColor: '#00008B', // Deep Blue
+                    titleColor: '#FFFFFF',
+                    bodyColor: '#ADD8E6', // Light Blue
+                    borderColor: '#20B2AA', // Teal
+                    borderWidth: 1
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { 
+                        color: '#475569', // slate-600
+                        font: { size: 12 }
+                    },
+                    grid: { color: '#e2e8f0' /* slate-200 */ }
+                },
+                x: {
+                    ticks: { 
+                        color: '#475569', // slate-600
+                        font: { size: 12 },
+                        maxRotation: 45,
+                        minRotation: 45
+                    },
+                    grid: { display: false }
+                }
+            }
+        };
+        
+        function wrapLabels(label, maxWidth) {
+            if (typeof label !== 'string') return label; // Should not happen with current data
+            const words = label.split(' ');
+            let lines = [];
+            let currentLine = words[0];
+
+            for (let i = 1; i < words.length; i++) {
+                if (currentLine.length + words[i].length + 1 <= maxWidth) {
+                    currentLine += ' ' + words[i];
+                } else {
+                    lines.push(currentLine);
+                    currentLine = words[i];
+                }
+            }
+            lines.push(currentLine);
+            return lines.length > 1 ? lines : label;
+        }
+
+
+        const hktbBudgetCtx = document.getElementById('hktbBudgetChart')?.getContext('2d');
+        if (hktbBudgetCtx) {
+            const budgetLabels = [
+                wrapLabels('Thematic Promotions & Mega Events', 16),
+                wrapLabels('Targeting Source Markets & Segments', 16),
+                wrapLabels('Partnering with Trade & Business Opps', 16),
+                wrapLabels('Smart Tourism & Seamless Experiences', 16)
+            ];
+            new Chart(hktbBudgetCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: budgetLabels,
+                    datasets: [{
+                        label: 'HKTB Budget Allocation (%)',
+                        data: [43, 25, 19, 4],
+                        backgroundColor: ['#0000CD', '#20B2AA', '#87CEEB', '#ADD8E6'], 
+                        borderColor: '#FFFFFF',
+                        borderWidth: 2
+                    }]
+                },
+                options: { ...commonChartOptions, cutout: '60%' }
+            });
+        }
+
+        const visitorArrivalsCtx = document.getElementById('visitorArrivalsChart')?.getContext('2d');
+        if (visitorArrivalsCtx) {
+             const visitorLabels = ['Mainland Visitors', 'Non-Mainland Visitors'];
+            new Chart(visitorArrivalsCtx, {
+                type: 'pie',
+                data: {
+                    labels: visitorLabels,
+                    datasets: [{
+                        label: 'Visitor Arrivals 2024 (Millions)',
+                        data: [34, 10.5],
+                         backgroundColor: ['#0000CD', '#20B2AA'], 
+                        borderColor: '#FFFFFF',
+                        borderWidth: 2
+                    }]
+                },
+                options: commonChartOptions
+            });
+        }
+
+        const socialMediaCtx = document.getElementById('socialMediaChart')?.getContext('2d');
+        if (socialMediaCtx) {
+            const socialLabels = [
+                wrapLabels('Instagram Followers', 16), 
+                wrapLabels('TikTok Followers', 16),
+                wrapLabels('X (Twitter) Followers', 16), 
+                wrapLabels('YouTube Subscribers', 16)
+            ];
+            new Chart(socialMediaCtx, {
+                type: 'bar',
+                data: {
+                    labels: socialLabels,
+                    datasets: [{
+                        label: 'Followers/Subscribers (Millions)',
+                        data: [74.8, 20.7, 21.6, 0.644],
+                        backgroundColor: ['#0000CD', '#20B2AA', '#87CEEB', '#ADD8E6'],
+                        borderColor: '#00008B',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    ...commonChartOptions,
+                    indexAxis: 'y', 
+                     scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { color: '#475569', font: { size: 12 } },
+                            grid: { color: '#e2e8f0' }
+                        },
+                        y: {
+                            ticks: { color: '#475569', font: { size: 11 } }, 
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        const generateIdeasBtn = document.getElementById('generateIdeasBtn');
+        const geminiIdeasOutput = document.getElementById('geminiIdeasOutput');
+
+        if (generateIdeasBtn && geminiIdeasOutput) {
+            generateIdeasBtn.addEventListener('click', async () => {
+                geminiIdeasOutput.innerHTML = '<div class="spinner"></div><p class="text-center text-slate-600">Generating creative ideas with AI...</p>';
+                geminiIdeasOutput.classList.remove('hidden');
+                generateIdeasBtn.disabled = true;
+                generateIdeasBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+                const prompt = "You are a creative marketing strategist. Ronaldinho Gaúcho is partnering with Hong Kong and Greater Bay Area tourism, leveraging his FIFA World Cup 2026 Ambassador status. Based on these existing activation categories: Signature Events (like 'Legends Matches', skills clinics), Cultural Tourism (like ambassador for festivals, heritage trails), and Youth & GBA Focus (like local academy collaborations, GBA discovery content), generate 3 NEW, specific, and innovative activation ideas that would be high-impact. For each idea, provide a catchy title (as a H4 heading) and a brief 1-2 sentence description (as a P tag). Focus on ideas that are fresh and engaging for both local and international audiences. Ensure the output is HTML-formatted to fit directly into a div.";
+                
+                let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+                const payload = { contents: chatHistory };
+                const apiKey = ""; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(`API Error: ${response.status} ${response.statusText}. Details: ${JSON.stringify(errorData)}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    let ideasHtml = '<h3 class="text-xl font-semibold text-sky-700 mb-3">✨ AI-Generated Activation Ideas:</h3>';
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        // Simple parsing assuming Gemini returns HTML as requested or structured text
+                        // For more robust parsing, might need to adjust based on actual Gemini output format
+                        const ideas = text.split('<h4>').slice(1).map(idea => '<h4>' + idea.trim()); // Split by H4 and re-add
+                        
+                        ideas.forEach(ideaContent => {
+                             ideasHtml += `<div class="gemini-output-card mb-4">${ideaContent}</div>`;
+                        });
+                        geminiIdeasOutput.innerHTML = ideasHtml;
+
+                    } else {
+                        ideasHtml += '<p class="text-red-600">No ideas generated or unexpected response format.</p>';
+                        geminiIdeasOutput.innerHTML = ideasHtml;
+                        console.error("Unexpected Gemini API response structure:", result);
+                    }
+                } catch (error) {
+                    console.error('Error fetching ideas from Gemini API:', error);
+                    geminiIdeasOutput.innerHTML = `<div class="gemini-output-card mb-4"><h4 class="text-red-700">Error Generating Ideas</h4><p class="text-red-600">Sorry, we couldn't generate ideas at this moment. Please try again later. Details: ${error.message}</p></div>`;
+                } finally {
+                    generateIdeasBtn.disabled = false;
+                    generateIdeasBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            });
+        }
+
+    </script>
+
+</body>
+</html>
