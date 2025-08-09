@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -39,7 +40,7 @@
       <button id="start">Start camera</button>
       <button id="stop" class="secondary">Stop</button>
       <select id="cameraSelect" class="secondary"></select>
-      <button id="torch" class="secondary">Torch</button>
+      <b
       <button id="speak" class="secondary">Voice</button>
       <button id="snapshot" class="secondary">Snapshot</button>
       <button id="export" class="secondary">Export CSV</button>
@@ -216,8 +217,8 @@
       heatMap=heatMap.filter(h=> h.alpha>0);
       for(const h of heatMap){
         ctx.fillStyle=`rgba(255,0,0,${h.alpha})`;
-        ctx.beginPath(); ctx.arc(h.x*overlay.width, h.y*overlay.height, 40, 0, Math.PI*2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(h.x*overlay.width, h.y*overlay.height, 40, 0, Math.PI*2);        ctx.fill();
+
         h.alpha*=0.97;
       }
       ctx.restore();
