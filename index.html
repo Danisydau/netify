@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ipanema Activation Insight Demo</title>
+  <style>
+    body { margin: 0; font-family: sans-serif; background:#0b0f14; color:#fff; overflow-x:hidden;}
+    #app { display:flex; flex-direction:column; align-items:center; padding:8px;}
+    video { width:100%; max-width:700px; height:auto; background:#111; border-radius:8px;}
+    canvas#overlay { position:absolute; top:0; left:0; width:100%; max-width:700px; pointer-events:none;}
+    #frame { position:relative; }
+    .info { display:flex; flex-wrap:wrap; gap:12px; margin-top:8px;}
+    .info div { background:#1f2b45; padding:6px 12px; border-radius:6px;}
+    .controls { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;}
+    .controls button, .controls select { padding:6px 10px; border:none; border-radius:5px; background:#2e3b5a; color:#fff; cursor:pointer;}
+    .controls button.secondary { background:#445a82;}
+    #camStatus.bad { background:#c33; padding:2px 6px; border-radius:4px; }
+    #camStatus.warn { background:#b38f00; padding:2px 6px; border-radius:4px; }
+    #camStatus.good { background:#0a4; padding:2px 6px; border-radius:4px; }
+    #testOut { white-space:pre-wrap; background:#111; padding:8px; border-radius:6px; margin-top:12px;}
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h2>Ipanema Activation Insight Demo</h2>
+    <div id="frame">
+      <video id="video" autoplay playsinline></video>
+      <canvas id="overlay"></canvas>
+    </div>
+    <div class="info">
+      <div>People: <span id="count">0</span></div>
+      <div>Engaged: <span id="engaged">0</span></div>
+      <div>Score: <span id="score">0</span></div>
+      <div>Mode: <span id="modeLabel">Activation</span></div>
+      <div>Status: <span id="camStatus" class="warn">off</span></div>
+    </div>
+    <div class="controls">
+      <button id="start">Start camera</button>
+      <button id="stop" class="secondary">Stop</button>
+      <select id="cameraSelect" class="secondary"></select>
+      <button id="torch" class="secondary">Torch</button>
+      <button id="speak" class="secondary">Voice</button>
+      <button id="snapshot" class="secondary">Snapshot</button>
+      <button id="export" class="secondary">Export CSV</button>
+      <button id="demo" class="secondary">Use Demo Stream</button>
+      <button id="toggleMode" class="secondary">Toggle Mode</button>
+      <label>Engage ≥ <input id="th" type="range" min="1" max="10" value="5" step="1"><span id="thVal">5</span>s</label>
+    </div>
+    <button id="testBtn" class="secondary">Run Unit Tests</button>
+    <pre id="testOut"></pre>
+  </div>
+<script>
+(()=>{
+  // Elements
+  const video=document.getElementById('video');
+  const overlay=document.getElementById('overlay');
+  const ctx=overlay.getContext('2d');
+  const countEl=document.getElementById('count');
+  const engagedEl=document.getElementById('engaged');
+  const scoreEl=document.getElementById('score');
+  const camStatus=document.getElementById('camStatus');
+  const th=document.getElementById('th');
+  const thVal=document.getElementById('thVal');
+  const modeLabel=document.getElementById('modeLabel');
+  const cameraSelect=document.getElementById('cameraSelect');
+  let stream=null; let track=null; let mode='activation'; let healthData={};
+  let heatMap=[];
+  let targets=[];
+  let voiceOn=false; let voicesynth=null;
+  function engagedMs(){ return Number(th.value)*1000; }
+  th.addEventListener('input', ()=> { thVal.textContent=th.value; });
+  document.getElementById('toggleMode').onclick=()=> {
+    mode = (mode==='activation') ? 'health' : 'activation';
+    modeLabel.textContent = mode.charAt(0).toUpperCase()+mode.slice(1);
+  };
+  async function populateCameraList(){
+    if(!navigator.mediaDevices?.enumerateDevices) return;
+    try{
+      const devices=await navigator.mediaDevices.enumerateDevices();
+      const cams=devices.filter(d=>d.kind==='videoinput');
+      cameraSelect.innerHTML='';
+      cams.forEach((cam,idx)=>{
+        const opt=document.createElement('option');
+        opt.value=cam.deviceId;
+        opt.text=cam.label || `Camera ${idx+1}`;
+        cameraSelect.appendChild(opt);
+      });
+    }catch(err){
+      console.warn('Enumerate devices error', err);
+    }
+  }
+  populateCameraList();
+  document.getElementById('start').onclick=async ()=> {
+    await startCamera();
+  };
+  async function startCamera(){
+    stopCamera();
+    const selectedId = cameraSelect.value;
+    const constraints = { video: selectedId ? {deviceId:{exact:selectedId}} : { facingMode:'environment' }, audio:false };
+    try{
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
+      track = stream.getVideoTracks()[0];
+      video.srcObject = stream;
+      camStatus.textContent='on'; camStatus.className='good';
+      overlay.width = video.clientWidth || 640;
+      overlay.height = video.clientHeight || 360;
+      setupTorchButton();
+      populateCameraList();
+      requestAnimationFrame(loop);
+    }catch(err){
+      camStatus.textContent=(err && err.name==='NotAllowedError')? 'denied':'blocked';
+      camStatus.className='bad';
+      console.error(err);
+      const msg = (window.isSecureContext || location.hostname==='localhost') ?
+         'Please allow camera access in your browser settings and reload.' :
+         'Camera requires HTTPS or localhost. Enable GitHub Pages/Netlify (HTTPS) or click “Use Demo Stream”.';
+      alert('Camera permission needed. '+msg);
+    }
+  }
+  function stopCamera(){
+    if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; track=null; }
+    stopDemo();
+    camStatus.textContent='off'; camStatus.className='warn';
+  }
+  document.getElementById('stop').onclick=stopCamera;
+  function setupTorchButton(){
+    const torchBtn=document.getElementById('torch');
+    if(!track || !track.getCapabilities) { torchBtn.disabled=true; return; }
+    const caps=track.getCapabilities();
+    if(!caps.torch) { torchBtn.disabled=true; return; }
+    torchBtn.disabled=false;
+    torchBtn.onclick=async ()=> {
+      const settings=track.getSettings();
+      const torchOn=settings.torch;
+      await track.applyConstraints({ advanced:[{torch: !torchOn}] });
+    };
+  }
+  document.getElementById('speak').onclick=()=>{
+    voiceOn=!voiceOn;
+  };
+  document.getElementById('snapshot').onclick=()=>{
+    if(!stream && !demoStream) return;
+    const c=document.createElement('canvas');
+    c.width=overlay.width; c.height=overlay.height;
+    const cx=c.getContext('2d');
+    cx.drawImage(video,0,0,c.width,c.height);
+    cx.drawImage(overlay,0,0,c.width,c.height);
+    const url=c.toDataURL('image/png');
+    const link=document.createElement('a');
+    link.href=url; link.download='snapshot.png';
+    link.click();
+  };
+  let csv=[]; let startTime=Date.now();
+  document.getElementById('export').onclick=()=>{
+    let content='time_ms,count,engaged,score\n';
+    csv.forEach(row=> { content+=`${row.time},${row.count},${row.engaged},${row.score}\n`; });
+    const blob=new Blob([content],{type:'text/csv'});
+    const link=document.createElement('a');
+    link.href=URL.createObjectURL(blob);
+    link.download='activation.csv';
+    link.click();
+  };
+  let demoStream=null, demoTicker=null;
+  function startDemo(){
+    stopCamera();
+    const c=document.createElement('canvas'); c.width=640; c.height=360;
+    const cx=c.getContext('2d');
+    const people=[...Array(6)].map(()=>({x:Math.random()*c.width,y:Math.random()*c.height,r:12+Math.random()*18,
+      dx:(Math.random()*2+0.5)*(Math.random()<.5?-1:1), dy:(Math.random()*2+0.5)*(Math.random()<.5?-1:1)}));
+    function draw(){
+      cx.fillStyle='#0b0f14'; cx.fillRect(0,0,c.width,c.height);
+      cx.fillStyle='#1f2b45';
+      for(const p of people){
+        p.x+=p.dx; p.y+=p.dy;
+        if(p.x<0||p.x>c.width) p.dx*=-1;
+        if(p.y<0||p.y>c.height) p.dy*=-1;
+        cx.beginPath(); cx.arc(p.x,p.y,p.r,0,Math.PI*2); cx.fill();
+      }
+      demoTicker=requestAnimationFrame(draw);
+    }
+    draw();
+    demoStream=c.captureStream(30);
+    video.srcObject=demoStream;
+    overlay.width=video.clientWidth||640;
+    overlay.height=video.clientHeight||360;
+    camStatus.textContent='demo'; camStatus.className='warn';
+    requestAnimationFrame(loop);
+    setupTorchButton();
+  }
+  function stopDemo(){
+    if(demoStream){ demoStream.getTracks().forEach(t=>t.stop()); demoStream=null; }
+    if(demoTicker){ cancelAnimationFrame(demoTicker); demoTicker=null; }
+  }
+  document.getElementById('demo').onclick=startDemo;
+  const FaceDetectorClass=window.FaceDetector;
+  const faceDetector= FaceDetectorClass? new FaceDetectorClass({maxDetectedFaces:10}) : null;
+  const BarcodeDetectorClass = window.BarcodeDetector;
+  const barcodeDetector = BarcodeDetectorClass ? new BarcodeDetectorClass({formats:['ean_13','ean_8','upc_a','qr_code']}) : null;
+  let lastFrame=performance.now();
+  function loop(){
+    if(!stream && !demoStream){ return; }
+    const now=performance.now();
+    const dt=now-lastFrame; lastFrame=now;
+    ctx.clearRect(0,0,overlay.width,overlay.height);
+    if(mode==='activation'){
+      detectPeople(dt);
+    } else {
+      detectHealth();
+    }
+    requestAnimationFrame(loop);
+  }
+  function detectPeople(dt){
+    const drawHeat = ()=>{
+      ctx.save();
+      heatMap=heatMap.filter(h=> h.alpha>0);
+      for(const h of heatMap){
+        ctx.fillStyle=`rgba(255,0,0,${h.alpha})`;
+        ctx.beginPath(); ctx.arc(h.x*overlay.width, h.y*overlay.height, 40, 0, Math.PI*2);
+        ctx.fill();
+        h.alpha*=0.97;
+      }
+      ctx.restore();
+    };
+    const handleDetections = (faces)=>{
+      const newTargets=[];
+      for(const f of faces){
+        const box = f.boundingBox || f;
+        const cx = (box.x + box.width/2) / video.videoWidth;
+        const cy = (box.y + box.height/2) / video.videoHeight;
+        let minDist=0.1, best=null;
+        for(const t of targets){
+          const dx=cx - t.cx;
+          const dy=cy - t.cy;
+          const dist=Math.sqrt(dx*dx+dy*dy);
+          if(dist<minDist){ minDist=dist; best=t; }
+        }
+        if(best){
+          best.cx=cx; best.cy=cy; best.dwell += dt;
+          newTargets.push(best);
+        } else {
+          newTargets.push({cx, cy, dwell: dt});
+        }
+        heatMap.push({x:cx, y:cy, alpha:0.2});
+      }
+      targets=newTargets;
+      ctx.strokeStyle='rgba(0,255,0,0.8)';
+      faces.forEach(face=>{
+        const box = face.boundingBox || face;
+        const x=box.x * overlay.width / video.videoWidth;
+        const y=box.y * overlay.height / video.videoHeight;
+        const w=box.width * overlay.width / video.videoWidth;
+        const h=box.height * overlay.height / video.videoHeight;
+        ctx.strokeRect(x,y,w,h);
+      });
+      drawHeat();
+      const total=targets.length;
+      const engaged=targets.filter(t=> t.dwell >= engagedMs()).length;
+      const score=computeScore(total, engagedMs(), engaged/Math.max(total,1), 0);
+      countEl.textContent=total;
+      engagedEl.textContent=engaged;
+      scoreEl.textContent=score.toFixed(0);
+      csv.push({time: Math.floor(performance.now() - startTime), count: total, engaged: engaged, score: score.toFixed(0)});
+    };
+    if(faceDetector){
+      faceDetector.detect(video).then(handleDetections).catch(err=> {
+        console.error(err);
+      });
+    }else{
+      heatMap=[]; targets=[]; countEl.textContent='0'; engagedEl.textContent='0'; scoreEl.textContent='0';
+    }
+  }
+  async function detectHealth(){
+    ctx.clearRect(0,0,overlay.width,overlay.height);
+    if(barcodeDetector){
+      try{
+        const codes = await barcodeDetector.detect(video);
+        if(codes.length>0){
+          const code = codes[0];
+          const val = code.rawValue || '';
+          showHealth(val);
+        }
+      }catch(err){
+        console.error(err);
+      }
+    } else {
+      const w=video.videoWidth, h=video.videoHeight;
+      if(!w || !h) return;
+      const ctemp=document.createElement('canvas'); ctemp.width=w; ctemp.height=h;
+      const cc=ctemp.getContext('2d');
+      cc.drawImage(video,0,0,w,h);
+      const pixel = cc.getImageData(w/2, h/2, 1,1).data;
+      const avgColor = (pixel[0]>pixel[1] && pixel[0]>pixel[2])? 'red' : (pixel[1]>pixel[0] && pixel[1]>pixel[2])? 'green':'blue';
+      const val = 'COLOR-'+avgColor;
+      showHealth(val);
+    }
+  }
+  function showHealth(code){
+    let score=5; let pros='N/A'; let cons='N/A';
+    if(code.startsWith('COLOR-')){
+      const col=code.split('-')[1];
+      score = scoreFromColor(col);
+      const h = heuristicsFromColor(col);
+      pros=h.pros.join('; ');
+      cons=h.cons.join('; ');
+    } else {
+      score = scoreFromBarcode(code);
+      pros='Barcode: '+code; cons='No cons';
+    }
+    scoreEl.textContent=score;
+    countEl.textContent='-';
+    engagedEl.textContent='-';
+  }
+  function computeScore(total, dwellMs, engagedRatio, shake){
+    const countScore = Math.min(total/10, 1);
+    const dwellScore = Math.min(engagedRatio,1);
+    const dwellFactor = Math.min(dwellMs/10000,1);
+    let s = (0.4*countScore + 0.4*dwellScore + 0.2*dwellFactor) * 100;
+    s *= (1 - 0.3*shake);
+    return Math.max(0, Math.min(100, s));
+    }
+  function scoreFromBarcode(code){
+    let sum=0;
+    for(let i=0;i<code.length;i++){ const c=code.charCodeAt(i); sum+= (c%10); }
+    return 1 + (sum % 9);
+  }
+  function scoreFromColor(col){
+    return {red:4, green:8, blue:6}[col] || 5;
+  }
+  function heuristicsFromColor(col){
+    switch(col){
+      case 'green': return {pros:['Organic','Low sugar'], cons:['Pricey'], packHint:'Green packaging'};
+      case 'red': return {pros:['Tasty'], cons:['High calories','Sugars'], packHint:'Red packaging'};
+      case 'blue': return {pros:['Hydrating'], cons:['Artificial'], packHint:'Blue packaging'};
+      default: return {pros:['Unknown'], cons:['Unknown'], packHint:'Unknown color'};
+    }
+  }
+  document.getElementById('testBtn').onclick= function runTests(){
+    const out=[]; const eq=(name,a,b)=> out.push(`${a===b?'✅':'❌'} ${name}: ${a} ${a===b?'==':'!='} ${b}`);
+    const is=(name,cond)=> out.push(`${cond?'✅':'❌'} ${name}`);
+    const prevTh=th.value; th.value='4';
+    is('computeScore floor >=0', computeScore(0,0,0,0)>=0);
+    is('computeScore ceiling <=100', computeScore(50, Number(th.value)*2, 1, 0)<=100);
+    const sLowShake=computeScore(10, Number(th.value), 0.5, 0);
+    const sHighShake=computeScore(10, Number(th.value), 0.5, 1);
+    is('score decreases with shake', sLowShake>=sHighShake);
+    const b1=(''+Date.now()).slice(0,8); const s1=scoreFromBarcode(b1); const s2=scoreFromBarcode(b1); eq('scoreFromBarcode deterministic', s1, s2);
+    eq('heuristicsFromColor green packHint', heuristicsFromColor('green').packHint, 'Green packaging');
+    eq('scoreFromColor map', scoreFromColor('green'), 8);
+    th.value='6'; eq('engagedMs matches threshold', engagedMs(), 6000);
+    th.value=prevTh; thVal.textContent=th.value;
+    const pre=document.getElementById('testOut');
+    pre.textContent=out.join('\n');
+  };
+})();
+</script>
+</body>
+</html>
